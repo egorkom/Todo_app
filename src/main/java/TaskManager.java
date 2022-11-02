@@ -4,37 +4,93 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TaskManager {
-    private final List<Task> taskList = new ArrayList<>();
+
+    //12.02.2023 12:00
+    //12.02.2021 12:00
+
+//    1. 12.2.2023 12:00
+//            1
+//            1
+//    _______________________________
+//2. 12.2.2023 03:00
+//        2
+//        2
+//    _______________________________
+//3. 11.2.2023 05:00
+//        3
+//        3
+//    _______________________________
+
+    private List<Task> taskList = new ArrayList<>();
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd.M.yyyy hh:mm");
     private Scanner scanner;
 
     public void addTask() throws ParseException {
         scanner = new Scanner(System.in);
-        String inputTitle;
-        String inputDescription;
-        String inputDate;
-
         System.out.println("Введите название запланированной задачи");
-        inputTitle = scanner.nextLine();
-        System.out.println("Введите описание");
-        inputDescription = scanner.nextLine();
-        System.out.println("Введите дату и время dd.M.yy hh:mm");
-        inputDate = scanner.nextLine();
+        String title = inputTitle(scanner.nextLine());
+        System.out.println("Введите описание задачи");
+        String description = scanner.nextLine();
+        System.out.println("Введите дату и время dd.mm.yyyy hh:mm");
+        Date date = inputDate(scanner.nextLine());
 
-        taskList.add(new Task(inputTitle, inputDescription, sdf.parse(inputDate)));
+        taskList.add(new Task(title
+                , description
+                , date));
+
+    }
+
+    private Date inputDate(String inputString) {
+
+        Date localDate = new Date();
+        Date inputDate = null;
+
+        try {
+            inputDate = sdf.parse(inputString);
+
+            if (inputDate.getTime() < localDate.getTime()) {
+                System.out.println("Это все в прошлом, подумай о будущем");
+                inputDate(scanner.nextLine());
+            } else {
+                return inputDate;
+            }
+        } catch (ParseException e) {
+            System.out.println("Формат даты не верный, повтори ввод");
+            inputDate(scanner.nextLine());
+        }
+        return inputDate;
+    }
+
+    private String inputTitle(String inputString) {
+        if (inputString.isEmpty()) {
+            System.out.println("Заголовок не может быть пустым, повторите ввод");
+            inputTitle(scanner.nextLine());
+        }
+        return inputString;
     }
 
 
-    public void removeTask(int number) {
-        if (number-1 <= taskList.size()) {
-            taskList.remove(number-1);
+    public void removeTask() {
+        if (taskList.isEmpty()||taskList.equals(null)){
+            System.out.println("Список еще не создан или в нем нет задач для удаления");
         } else {
-            System.out.println("В списке всего " + taskList.size() + " задачи " + " введите правильный номер!");
+            System.out.println("Введите номер задачи для удаления");
+            scanner = new Scanner(System.in);
+            int taskNumber = scanner.nextInt();
+
+            if (taskNumber-1 <= taskList.size()) {
+                taskList.remove(taskNumber - 1);
+            } else {
+                System.out.println("В списке всего " + taskList.size() + " задачи " + " введите правильный номер!");
+                removeTask();
+            }
         }
     }
 
     public void showAllTasks()  {
-        if (taskList==null) {
+        scanner = new Scanner(System.in);
+
+        if (taskList.isEmpty()) {
             System.out.println("У вас нет запланированных задач, хотите запланировать?" + "\n" + "1 - да, 2 - нет");
             switch (scanner.nextInt()) {
                 case 1:
@@ -43,9 +99,6 @@ public class TaskManager {
                     } catch (ParseException e) {
                         throw new RuntimeException(e);
                     }
-                    break;
-                default:
-                    showMenu();
                     break;
             }
         } else {
@@ -63,9 +116,13 @@ public class TaskManager {
         }
 
     public void sortByDate() {
-        taskList = taskList.stream()
-                .sorted(Comparator.comparingLong(Task::getMillis).reversed())
-                .collect(Collectors.toList());
+        if (!taskList.isEmpty()) {
+            taskList.stream()
+                    .sorted(Comparator.comparing(Task::getMillis).reversed())
+                    .collect(Collectors.toList());
+        } else {
+            System.out.println("Сортировать нечего");
+        }
     }
 
     public void start() {
@@ -86,12 +143,10 @@ public class TaskManager {
                     }
                     break;
                 case 3:
-                    System.out.println("Введите номер задачи для удаления");
-                    removeTask(scanner.nextInt());
+                    removeTask();
                     break;
                 case 4:
                     sortByDate();
-                    showAllTasks();
                     break;
                 case 5:
                     System.out.println("Программа завершена");
@@ -101,6 +156,7 @@ public class TaskManager {
                     showMenu();
             }
         }
+        scanner.close();
     }
     public void showMenu(){
         String menu = "\n"+"1 - отобразить список всех задач" + "\n" +
